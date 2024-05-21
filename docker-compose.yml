@@ -1,5 +1,7 @@
 version: '3'
+
 services:
+
   nagios:
     image: jasonrivers/nagios:4.4.6
     ports:
@@ -15,7 +17,7 @@ services:
     container_name: omada-controller
     image: mbentley/omada-controller:5.1
     environment:
-      - TZ=Etc/UTC  # Zona horaria
+      - TZ=America/Montevideo  # Zona horaria de Uruguay
       - MANAGE_HTTP_PORT=8088  # Puerto HTTP de gestión
       - MANAGE_HTTPS_PORT=8043  # Puerto HTTPS de gestión
       - PORTAL_HTTP_PORT=8088  # Puerto HTTP del portal
@@ -31,27 +33,52 @@ services:
       - omada-logs:/opt/tplink/EAPController/logs  # Logs del controlador
     restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
 
+
   unifi-controller:
-    image: lscr.io/linuxserver/unifi-controller:latest
     container_name: unifi-controller
+    image: lscr.io/linuxserver/unifi-controller:latest
     environment:
       - PUID=1000  # ID del usuario
       - PGID=1000  # ID del grupo
       - MEM_LIMIT=1024 # Limite opcional de memoria
       - MEM_STARTUP=1024 # Memoria de inicio opcional
-    volumes:
-      - /path/to/data:/config  # Ruta donde se almacenarán los datos de configuración
     ports:
-      - 8443:8443  # Puertos necesarios para el controlador UniFi
-      - 3478:3478/udp
-      - 10001:10001/udp
-      - 8080:8080
-      - 1900:1900/udp  # Opcional
-      - 8843:8843  # Opcional
-      - 8880:8880  # Opcional
-      - 6789:6789  # Opcional
-      - 5514:5514/udp  # Opcional
+      - "8443:8443"  # Puerto para la interfaz web de UniFi Controller
+      - "3478:3478/udp"  # Puerto para STUN
+      - "10001:10001/udp"  # Puerto para UBNT Discovery
+      - "8081:8080"  # Puerto para la interfaz informática de UniFi Controller
+      - "1900:1900/udp"  # Puerto para UPnP
+      - "8843:8843"  # Puerto para la administración de UniFi
+      - "8880:8880"  # Puerto para la administración de UniFi
+      - "6789:6789"  # Puerto para mFi
+      - "5514:5514/udp"  # Puerto para syslog
+    volumes:
+      - /home/docker/UniFi-Controller:/config  # Ruta donde se almacenarán los datos de configuración
     restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
+
+
+
+  # unifi-controller:
+  #   image: lscr.io/linuxserver/unifi-controller:latest
+  #   container_name: unifi-controller
+  #   environment:
+  #     - PUID=1000  # ID del usuario
+  #     - PGID=1000  # ID del grupo
+  #     - MEM_LIMIT=1024 # Limite opcional de memoria
+  #     - MEM_STARTUP=1024 # Memoria de inicio opcional
+  #   volumes:
+  #     - /path/to/data:/config  # Ruta donde se almacenarán los datos de configuración
+  #   ports:
+  #     - 8443:8443  # Puertos necesarios para el controlador UniFi
+  #     - 3478:3478/udp
+  #     - 10001:10001/udp
+  #     - 8080:8081
+  #     - 1900:1900/udp  # Opcional
+  #     - 8843:8843  # Opcional
+  #     - 8880:8880  # Opcional
+  #     - 6789:6789  # Opcional
+  #     - 5514:5514/udp  # Opcional
+  #   restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
 
   mysql:
     image: mysql:latest
@@ -67,18 +94,18 @@ services:
       - "3306:3306"  # Exponer MySQL en el puerto 3306
     restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
 
-  reflex-web:
-    image: your-reflex-image:latest
-    container_name: reflex-web
-    environment:
-      - DATABASE_URL=mysql://user:user_password@mysql:3306/network_management  # URL de la base de datos
-    ports:
-      - "3000:3000"  # Exponer la aplicación web en el puerto 3000
-    volumes:
-      - reflex_data:/app/data  # Almacenar datos de la aplicación web
-    restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
-    depends_on:
-      - mysql  # Esperar a que el contenedor MySQL esté listo antes de iniciar
+  # reflex-web:
+  #   image: your-reflex-image:latest
+  #   container_name: reflex-web
+  #   environment:
+  #     - DATABASE_URL=mysql://user:user_password@mysql:3306/network_management  # URL de la base de datos
+  #   ports:
+  #     - "3000:3000"  # Exponer la aplicación web en el puerto 3000
+  #   volumes:
+  #     - reflex_data:/app/data  # Almacenar datos de la aplicación web
+  #   restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
+  #   depends_on:
+  #     - mysql  # Esperar a que el contenedor MySQL esté listo antes de iniciar
 
 volumes:
   nagios_data:
@@ -89,4 +116,4 @@ volumes:
   omada-work:
   omada-logs:
   mysql_data:
-  reflex_data:
+  # reflex_data:
