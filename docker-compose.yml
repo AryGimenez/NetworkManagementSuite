@@ -1,0 +1,92 @@
+version: '3'
+services:
+  nagios:
+    image: jasonrivers/nagios:4.4.6
+    ports:
+      - "8080:80"  # Exponer Nagios en el puerto 8080 del host
+    volumes:
+      - nagios_data:/opt/nagios/etc  # Almacenar configuración de Nagios
+      - nagios_custom_plugins:/opt/Custom-Nagios-Plugins  # Plugins personalizados de Nagios
+      - nagiosgraph_var:/opt/nagiosgraph/var  # Datos de NagiosGraph
+      - nagiosgraph_etc:/opt/nagiosgraph/etc  # Configuración de NagiosGraph
+    restart: always  # Reiniciar siempre en caso de fallo
+
+  omada-controller:
+    container_name: omada-controller
+    image: mbentley/omada-controller:5.1
+    environment:
+      - TZ=Etc/UTC  # Zona horaria
+      - MANAGE_HTTP_PORT=8088  # Puerto HTTP de gestión
+      - MANAGE_HTTPS_PORT=8043  # Puerto HTTPS de gestión
+      - PORTAL_HTTP_PORT=8088  # Puerto HTTP del portal
+      - PORTAL_HTTPS_PORT=8043  # Puerto HTTPS del portal
+      - SHOW_SERVER_LOGS=true  # Mostrar logs del servidor
+      - SHOW_MONGODB_LOGS=false  # No mostrar logs de MongoDB
+      - SSL_CERT_NAME="tls.crt"  # Nombre del certificado SSL
+      - SSL_KEY_NAME="tls.key"  # Nombre de la clave SSL
+    network_mode: host  # Utilizar la red del host
+    volumes:
+      - omada-data:/opt/tplink/EAPController/data  # Datos del controlador Omada
+      - omada-work:/opt/tplink/EAPController/work  # Archivos de trabajo del controlador
+      - omada-logs:/opt/tplink/EAPController/logs  # Logs del controlador
+    restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
+
+  unifi-controller:
+    image: lscr.io/linuxserver/unifi-controller:latest
+    container_name: unifi-controller
+    environment:
+      - PUID=1000  # ID del usuario
+      - PGID=1000  # ID del grupo
+      - MEM_LIMIT=1024 # Limite opcional de memoria
+      - MEM_STARTUP=1024 # Memoria de inicio opcional
+    volumes:
+      - /path/to/data:/config  # Ruta donde se almacenarán los datos de configuración
+    ports:
+      - 8443:8443  # Puertos necesarios para el controlador UniFi
+      - 3478:3478/udp
+      - 10001:10001/udp
+      - 8080:8080
+      - 1900:1900/udp  # Opcional
+      - 8843:8843  # Opcional
+      - 8880:8880  # Opcional
+      - 6789:6789  # Opcional
+      - 5514:5514/udp  # Opcional
+    restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password  # Contraseña root
+      - MYSQL_DATABASE=network_management  # Base de datos predeterminada
+      - MYSQL_USER=user  # Usuario de la base de datos
+      - MYSQL_PASSWORD=user_password  # Contraseña del usuario
+    volumes:
+      - mysql_data:/var/lib/mysql  # Almacenar datos de MySQL
+    ports:
+      - "3306:3306"  # Exponer MySQL en el puerto 3306
+    restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
+
+  reflex-web:
+    image: your-reflex-image:latest
+    container_name: reflex-web
+    environment:
+      - DATABASE_URL=mysql://user:user_password@mysql:3306/network_management  # URL de la base de datos
+    ports:
+      - "3000:3000"  # Exponer la aplicación web en el puerto 3000
+    volumes:
+      - reflex_data:/app/data  # Almacenar datos de la aplicación web
+    restart: unless-stopped  # Reiniciar a menos que se detenga manualmente
+    depends_on:
+      - mysql  # Esperar a que el contenedor MySQL esté listo antes de iniciar
+
+volumes:
+  nagios_data:
+  nagios_custom_plugins:
+  nagiosgraph_var:
+  nagiosgraph_etc:
+  omada-data:
+  omada-work:
+  omada-logs:
+  mysql_data:
+  reflex_data:
