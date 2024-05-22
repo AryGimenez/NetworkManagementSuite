@@ -141,3 +141,105 @@ volumes:
   omada-work:
   omada-logs:
   mysql_data:
+
+```
+## Explicación de la Aplicación Web Desarrollada con Reflex
+
+La aplicación web desarrollada con Reflex tiene como objetivo proporcionar una interfaz intuitiva para gestionar y monitorear dispositivos de red. Las funcionalidades clave incluyen:
+
+- **Escaneo de la red:** Detecta dispositivos de red, como APs y switches, guardando información relevante como IP, MAC, nombre y modelo.
+- **Adopción de dispositivos:** Proporciona un botón para adoptar dispositivos. El backend ejecuta comandos necesarios para añadir dispositivos al controlador UniFi o TP-Link y los configura en Nagios.
+- **Identificación de dispositivos adoptados y no adoptados:** La aplicación debe mostrar claramente qué dispositivos ya están adoptados y cuáles no.
+- **Interacción con dispositivos UniFi:** La aplicación incluye un botón que permite ejecutar comandos para que los APs UniFi parpadeen, facilitando su identificación física.
+
+La aplicación se desarrollará utilizando el framework Reflex, lo que permitirá una gestión eficiente y amigable de la red.
+
+### Tecnologías Utilizadas
+
+- **Docker:** Para la creación y gestión de contenedores de cada componente.
+- **UniFi y TP-Link Controllers:** Para la administración centralizada de dispositivos de red.
+- **Nagios:** Para el monitoreo del rendimiento y estado de la red.
+- **MySQL:** Para el almacenamiento de datos.
+- **Reflex:** Para el desarrollo de la aplicación web.
+
+Esta configuración asegura que cada componente del sistema esté optimizado y pueda ser escalado independientemente según sea necesario.
+
+### Uso de los Diferentes Contenedores
+
+Acceso a las interfaces web de cada contenedor:
+
+- **Nagios:** [http://localhost:8080](http://localhost:8080)
+- **Omada Controller:** [http://localhost:8088](http://localhost:8088) (HTTP) o [https://localhost:8043](https://localhost:8043) (HTTPS)
+- **UniFi Controller:** [https://localhost:8443](https://localhost:8443)
+
+**Notas:**
+
+- Algunos contenedores pueden requerir configuración adicional de usuarios y contraseñas.
+- Asegúrate de configurar correctamente las credenciales de acceso y permisos según las necesidades de seguridad de tu red.
+
+### Script de Instalación `install.sh`
+
+Este script automatiza la instalación de las herramientas necesarias en tu entorno.
+
+```bash
+#!/bin/bash
+
+sudo apt update
+sudo apt upgrade
+
+# ------- NET-TOOLS ------
+if ! command -v netstat &> /dev/null
+then
+    sudo apt install net-tools
+    echo "Paquete net-tools instalado correctamente."
+else
+    echo "El paquete net-tools ya está instalado."
+fi
+
+# ------- TMUX ------
+read -p "¿Deseas instalar Tmux? (y/n): " install_tmux
+case "$install_tmux" in
+  y|Y )
+    sudo apt install tmux
+    echo "Tmux instalado correctamente." ;;
+  n|N ) echo "No se instalará Tmux." ;;
+  * ) echo "Por favor, responde y o n."; exit;;
+esac
+
+# ------- GIT ------
+if ! command -v git &> /dev/null
+then
+    sudo apt install git
+    echo "Git instalado correctamente."
+else
+    echo "Git ya está instalado."
+fi
+
+# ------- ZSH ------
+read -p "¿Deseas instalar Zsh? (y/n): " install_zsh
+case "$install_zsh" in 
+  y|Y ) 
+    if ! command -v zsh &> /dev/null; then
+        sudo apt update
+        sudo apt install -y zsh
+        echo "Zsh instalado correctamente."
+    else
+        echo "Zsh ya está instalado."
+    fi
+
+    if ! command -v curl &> /dev/null; then
+        sudo apt install -y curl
+    fi
+    
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    chsh -s "$(which zsh)"
+    
+    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH}/custom/plugins/zsh-autosuggestions
+    echo "source ${ZSH}/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ~/.zshrc
+    echo "Zsh instalado y configurado correctamente."
+    ;;
+  n|N ) echo "No se instalará Zsh." ;;
+  * ) echo "Por favor, responde y o n."; exit;;
+esac
+
+```
