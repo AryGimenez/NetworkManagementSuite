@@ -16,3 +16,7 @@ sudo docker run -d \
   -p 5514:5514/udp `#optional` \
   -v /home/docker/UniFi-Controller:/config \
   lscr.io/linuxserver/unifi-controller:latest
+
+
+
+  
